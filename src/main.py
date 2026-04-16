@@ -1,25 +1,38 @@
-"""Braslina — FastAPI application entry point."""
-
 from fastapi import FastAPI
 
+from src.agent import router as website_monitor
+from src.checklist import router as merchant_checklist
+from src.register import router as onboarding_register
+from src.purchases import router as test_purchase
+
 app = FastAPI(
-    title="Braslina",
-    description="Banxe Merchant Onboarding Automation API",
+    title="Braslina — Merchant Onboarding Automation",
     version="0.1.0",
+    description="Open-source merchant monitoring & onboarding for BANXE EMI",
+)
+
+app.include_router(
+    website_monitor.router,
+    prefix="/api/v1/website-monitor",
+    tags=["Website Monitor"],
+)
+app.include_router(
+    merchant_checklist.router,
+    prefix="/api/v1/checklist",
+    tags=["Merchant Checklist"],
+)
+app.include_router(
+    onboarding_register.router,
+    prefix="/api/v1/onboarding",
+    tags=["Onboarding"],
+)
+app.include_router(
+    test_purchase.router,
+    prefix="/api/v1/test-purchase",
+    tags=["Test Purchase"],
 )
 
 
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "braslina"}
-
-
-# Routers will be added as modules mature:
-# from src.agent.router import router as agent_router
-# from src.checklist.router import router as checklist_router
-# from src.register.router import router as register_router
-# from src.purchases.router import router as purchases_router
-# app.include_router(agent_router, prefix="/api/v1/agent", tags=["agent"])
-# app.include_router(checklist_router, prefix="/api/v1/checklists", tags=["checklists"])
-# app.include_router(register_router, prefix="/api/v1/merchants", tags=["merchants"])
-# app.include_router(purchases_router, prefix="/api/v1/purchases", tags=["purchases"])
