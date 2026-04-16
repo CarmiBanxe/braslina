@@ -1,8 +1,18 @@
 """Pydantic schemas for checklist API."""
 
 from datetime import datetime
+from enum import StrEnum
 
 from pydantic import BaseModel
+
+
+class CheckStatusEnum(StrEnum):
+    PENDING = "pending"
+    IN_PROGRESS = "in_progress"
+    PASSED = "passed"
+    FAILED = "failed"
+    NEEDS_REVIEW = "needs_review"
+    NOT_APPLICABLE = "not_applicable"
 
 
 class CheckItemResponse(BaseModel):
@@ -24,7 +34,7 @@ class ChecklistCreate(BaseModel):
 
 
 class CheckItemUpdate(BaseModel):
-    status: str
+    status: CheckStatusEnum
     evidence_url: str | None = None
     notes: str | None = None
 
@@ -38,3 +48,15 @@ class ChecklistResponse(BaseModel):
     items: list[CheckItemResponse] = []
 
     model_config = {"from_attributes": True}
+
+
+class EvaluationResponse(BaseModel):
+    total: int
+    passed: int
+    failed: int
+    needs_review: int
+    pending: int
+    not_applicable: int
+    is_complete: bool
+    is_blocked: bool
+    completion_pct: float
