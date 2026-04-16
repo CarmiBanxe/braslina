@@ -15,15 +15,14 @@ except ImportError:
     async_playwright = None
 
 try:
-    from pixelmatch import pixelmatch as _pixelmatch
-    from PIL import Image
     import numpy as np
+    from PIL import Image
+    from pixelmatch import pixelmatch as _pixelmatch
 
     HAS_PIXELMATCH = True
 except ImportError:
     HAS_PIXELMATCH = False
 
-from src.common.config import settings
 
 STORAGE_BASE = Path("/app/storage/screenshots")
 

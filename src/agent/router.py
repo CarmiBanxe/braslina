@@ -1,12 +1,11 @@
 """FastAPI router for website monitor agent."""
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.agent.schemas import MonitorRequest, MonitorResult, SnapshotResponse
 from src.agent.service import MonitorService
 from src.common.database import get_db
-from src.common.exceptions import NotFoundError
 
 router = APIRouter()
 

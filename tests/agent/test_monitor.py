@@ -1,10 +1,8 @@
 """Tests for website monitor agent — capture, diff, service."""
 
-import pytest
-from unittest.mock import AsyncMock, patch
 from pathlib import Path
 
-from src.agent.monitor import ScreenshotResult, _ts, STORAGE_BASE
+from src.agent.monitor import STORAGE_BASE, ScreenshotResult, _ts
 
 
 def test_timestamp_format():
