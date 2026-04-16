@@ -1,31 +1,47 @@
 """Pydantic schemas for merchant register API."""
 
-from datetime import date, datetime
+from datetime import datetime
+from enum import StrEnum
 
 from pydantic import BaseModel
+
+
+class MerchantStatusEnum(StrEnum):
+    NEW = "new"
+    UNDER_REVIEW = "under_review"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    SUSPENDED = "suspended"
 
 
 class MerchantCreate(BaseModel):
     name: str
     website: str
     mcc: str
-    status: str = "new"
-    date_started_work: date | None = None
-    monthly_volume: float = 0.0
-    assigned_to: str | None = None
-    notes: str | None = None
 
 
 class MerchantUpdate(BaseModel):
     name: str | None = None
     website: str | None = None
     mcc: str | None = None
-    status: str | None = None
-    date_started_work: date | None = None
-    next_review_date: date | None = None
-    monthly_volume: float | None = None
-    assigned_to: str | None = None
-    notes: str | None = None
+    assigned_owner: str | None = None
+
+
+class StatusChangeRequest(BaseModel):
+    status: MerchantStatusEnum
+    changed_by: str | None = None
+    reason: str | None = None
+
+
+class StatusLogEntry(BaseModel):
+    id: str
+    from_status: str
+    to_status: str
+    changed_by: str | None
+    reason: str | None
+    changed_at: datetime
+
+    model_config = {"from_attributes": True}
 
 
 class MerchantResponse(BaseModel):
@@ -34,12 +50,12 @@ class MerchantResponse(BaseModel):
     website: str
     mcc: str
     status: str
-    date_started_work: date | None
-    next_review_date: date | None
-    monthly_volume: float
-    assigned_to: str | None
-    notes: str | None
+    assigned_owner: str | None = None
     created_at: datetime
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class MerchantDetailResponse(MerchantResponse):
+    status_log: list[StatusLogEntry] = []
