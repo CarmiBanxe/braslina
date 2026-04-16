@@ -1,37 +1,34 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from src.agent.router import router as agent_router
+from src.checklist.router import router as checklist_router
+from src.register.router import router as register_router
+from src.purchases.router import router as purchases_router
+from src.common.database import engine
+from src.common.base import Base
 
-from src.agent import router as website_monitor
-from src.checklist import router as merchant_checklist
-from src.register import router as onboarding_register
-from src.purchases import router as test_purchase
+import src.agent.db_models  # noqa
+import src.checklist.db_models  # noqa
+import src.register.db_models  # noqa
+import src.purchases.db_models  # noqa
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    print("✅ DB tables ready")
+    yield
 
 app = FastAPI(
     title="Braslina — Merchant Onboarding Automation",
     version="0.1.0",
-    description="Open-source merchant monitoring & onboarding for BANXE EMI",
+    lifespan=lifespan,
 )
 
-app.include_router(
-    website_monitor.router,
-    prefix="/api/v1/website-monitor",
-    tags=["Website Monitor"],
-)
-app.include_router(
-    merchant_checklist.router,
-    prefix="/api/v1/checklist",
-    tags=["Merchant Checklist"],
-)
-app.include_router(
-    onboarding_register.router,
-    prefix="/api/v1/onboarding",
-    tags=["Onboarding"],
-)
-app.include_router(
-    test_purchase.router,
-    prefix="/api/v1/test-purchase",
-    tags=["Test Purchase"],
-)
-
+app.include_router(agent_router, prefix="/api/v1/monitor", tags=["Website Monitor"])
+app.include_router(checklist_router, prefix="/api/v1/checklist", tags=["Checklist"])
+app.include_router(register_router, prefix="/api/v1/onboarding", tags=["Onboarding"])
+app.include_router(purchases_router, prefix="/api/v1/test-purchase", tags=["Test Purchase"])
 
 @app.get("/health")
 async def health():
