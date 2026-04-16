@@ -1,15 +1,22 @@
 """Pydantic schemas for test purchases API."""
-
 from datetime import datetime
+from enum import Enum
+from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
+
+
+class PurchaseResult(str, Enum):
+    passed = "passed"
+    failed = "failed"
+    partial = "partial"
 
 
 class PurchaseCreate(BaseModel):
     merchant_id: str
     amount: float
     currency: str = "EUR"
-    result: str
+    result: Literal["passed", "failed", "partial"]
     performed_by: str
     screenshot_url: str | None = None
     refund_tested: bool = False
@@ -31,3 +38,12 @@ class PurchaseResponse(BaseModel):
     notes: str | None
 
     model_config = {"from_attributes": True}
+
+
+class PurchaseSummary(BaseModel):
+    merchant_id: str
+    total: int
+    passed: int
+    failed: int
+    partial: int
+    last_purchase_at: datetime | None
