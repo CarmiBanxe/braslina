@@ -1,7 +1,8 @@
 """Pydantic schemas for checklist API."""
 
-from pydantic import BaseModel
 from datetime import datetime
+
+from pydantic import BaseModel
 
 
 class CheckItemResponse(BaseModel):

@@ -1,7 +1,8 @@
 """Pydantic schemas for merchant register API."""
 
-from pydantic import BaseModel
 from datetime import date, datetime
+
+from pydantic import BaseModel
 
 
 class MerchantCreate(BaseModel):

@@ -1,17 +1,16 @@
 """FastAPI router for merchant checklists."""
 
-import copy
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.common.database import get_db
-from src.checklist.db_models import ChecklistDB, CheckItemDB
+from src.checklist.db_models import CheckItemDB, ChecklistDB
 from src.checklist.engine import SALES_CHECKLIST
-from src.checklist.schemas import ChecklistCreate, ChecklistResponse, CheckItemUpdate, CheckItemResponse
+from src.checklist.schemas import CheckItemResponse, CheckItemUpdate, ChecklistCreate, ChecklistResponse
+from src.common.database import get_db
 
 router = APIRouter()
 
@@ -54,7 +53,7 @@ async def update_check_item(item_id: str, data: CheckItemUpdate, db: AsyncSessio
     if not item:
         raise HTTPException(404, "Check item not found")
     item.status = data.status
-    item.verified_at = datetime.now(timezone.utc)
+    item.verified_at = datetime.now(UTC)
     if data.evidence_url is not None:
         item.evidence_url = data.evidence_url
     if data.notes is not None:

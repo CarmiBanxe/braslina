@@ -1,7 +1,8 @@
 """Pydantic schemas for website monitor agent API."""
 
-from pydantic import BaseModel
 from datetime import datetime
+
+from pydantic import BaseModel
 
 
 class MonitorRequest(BaseModel):
