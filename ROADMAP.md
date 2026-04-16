@@ -1,7 +1,7 @@
 # BRASLINA — Production Roadmap
 
 > **Source of truth** for all development phases.  
-> Updated: 2026-04-16 | Status: Phase 1 in progress  
+> Updated: 2026-04-16 | > Updated: 2026-04-17 | Status: v1.0.0 RELEASED
 > Repo: https://github.com/CarmiBanxe/braslina
 
 ---
