@@ -22,8 +22,8 @@ async def create_checklist(data: ChecklistCreate, db: AsyncSession = Depends(get
     checklist = ChecklistDB(merchant_id=data.merchant_id, template_id=data.template_id)
     for item in template.items:
         checklist.items.append(CheckItemDB(
-            name=item.name, description=item.description,
-            auto_verifiable=item.auto_verifiable,
+            name=item.label, description=item.code,
+            auto_verifiable=False,
         ))
     db.add(checklist)
     await db.commit()
