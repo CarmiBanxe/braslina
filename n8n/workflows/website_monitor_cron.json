@@ -1,0 +1,38 @@
+{
+  "name": "Braslina — Website Monitor (Daily)",
+  "nodes": [
+    {
+      "parameters": {"rule": {"interval": [{"field": "days", "daysInterval": 1}]}},
+      "name": "Daily Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/api/v1/onboarding/?status=active",
+        "options": {}
+      },
+      "name": "Get Active Merchants",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [470, 300]
+    },
+    {
+      "parameters": {
+        "url": "=http://api:8000/api/v1/monitor/monitor",
+        "method": "POST",
+        "body": {"mode": "json", "json": "={{ JSON.stringify({merchant_id: $json.id, url: $json.website_url}) }}"},
+        "options": {}
+      },
+      "name": "Screenshot & Compare",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [690, 300]
+    }
+  ],
+  "connections": {
+    "Daily Trigger": {"main": [[{"node": "Get Active Merchants", "type": "main", "index": 0}]]},
+    "Get Active Merchants": {"main": [[{"node": "Screenshot & Compare", "type": "main", "index": 0}]]}
+  }
+}

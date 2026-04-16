@@ -1,0 +1,69 @@
+{
+  "name": "Braslina — Merchant Onboarding Pipeline",
+  "nodes": [
+    {
+      "parameters": {"rule": {"interval": [{"field": "hours", "hoursInterval": 6}]}},
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/api/v1/onboarding/?status=pending",
+        "options": {}
+      },
+      "name": "Get Pending Merchants",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [470, 300]
+    },
+    {
+      "parameters": {
+        "url": "=http://api:8000/api/v1/monitor/monitor",
+        "method": "POST",
+        "body": {"mode": "json", "json": "={{ JSON.stringify({merchant_id: $json.id, url: $json.website_url}) }}"},
+        "options": {}
+      },
+      "name": "Run Website Monitor",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [690, 300]
+    },
+    {
+      "parameters": {
+        "url": "=http://api:8000/api/v1/checklist/",
+        "method": "POST",
+        "body": {"mode": "json", "json": "={{ JSON.stringify({merchant_id: $json.merchant_id, template_id: 'tpl_sales_v1'}) }}"},
+        "options": {}
+      },
+      "name": "Create Checklist",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [910, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {"boolean": [{"value1": "={{ $json.alert }}", "value2": true}]}
+      },
+      "name": "Alert Decision",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1130, 300]
+    },
+    {
+      "parameters": {"values": {"string": [{"name": "message", "value": "=⚠️ Merchant {{ $('Run Website Monitor').item.json.merchant_id }}: website changed >5%"}]}},
+      "name": "Prepare Alert",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1350, 200]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {"main": [[{"node": "Get Pending Merchants", "type": "main", "index": 0}]]},
+    "Get Pending Merchants": {"main": [[{"node": "Run Website Monitor", "type": "main", "index": 0}]]},
+    "Run Website Monitor": {"main": [[{"node": "Create Checklist", "type": "main", "index": 0}]]},
+    "Create Checklist": {"main": [[{"node": "Alert Decision", "type": "main", "index": 0}]]},
+    "Alert Decision": {"main": [[{"node": "Prepare Alert", "type": "main", "index": 0}], []]}
+  }
+}
