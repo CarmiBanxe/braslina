@@ -48,3 +48,7 @@ def default_merchant_checklist() -> ChecklistResult:
             ChecklistItem("refund-check", "Refund flow verified", CheckStatus.NEEDS_REVIEW),
         ]
     )
+
+
+# Alias for router compatibility
+SALES_CHECKLIST = default_merchant_checklist()

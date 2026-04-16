@@ -41,3 +41,23 @@ def create_placeholder_screenshot(path: str | Path, url: str) -> Path:
 def run_job(base_dir: str | Path, job: ScreenshotJob) -> Path:
     target = build_storage_path(base_dir=base_dir, merchant_id=job.merchant_id, url=job.url)
     return create_placeholder_screenshot(target, job.url)
+
+
+async def monitor_merchant(
+    merchant_id: str,
+    url: str,
+    storage_dir: str | Path,
+    alert_threshold_pct: float = 5.0,
+) -> dict:
+    screenshot_path = run_job(
+        base_dir=storage_dir,
+        job=ScreenshotJob(merchant_id=merchant_id, url=url),
+    )
+    return {
+        "merchant_id": merchant_id,
+        "action": "captured",
+        "diff_pct": 0.0,
+        "alert": False,
+        "diff_path": str(screenshot_path),
+        "alert_threshold_pct": alert_threshold_pct,
+    }
