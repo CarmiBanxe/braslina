@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Braslina Admin</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Braslina Admin Dashboard</h1>
+    <div id="auth-bar">
+      <input type="password" id="api-key" placeholder="API Key">
+      <button onclick="setApiKey()">Connect</button>
+      <span id="auth-status"></span>
+    </div>
+  </header>
+  <main>
+    <section id="merchant-list">
+      <h2>Merchants</h2>
+      <table id="merchants-table">
+        <thead>
+          <tr>
+            <th>ID</th><th>Name</th><th>Status</th><th>Created</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+    <section id="merchant-detail" style="display:none">
+      <button onclick="showList()">&larr; Back</button>
+      <h2 id="detail-name"></h2>
+      <div id="detail-status"></div>
+      <div class="tabs">
+        <button class="tab active" data-tab="checklist">Checklist</button>
+        <button class="tab" data-tab="snapshots">Snapshots</button>
+        <button class="tab" data-tab="purchases">Purchases</button>
+        <button class="tab" data-tab="crm">CRM</button>
+      </div>
+      <div id="tab-content"></div>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
