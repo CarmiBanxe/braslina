@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.common.database import get_db
 from src.register.db_models import MerchantDB
-from src.register.schemas import MerchantCreate, MerchantUpdate, MerchantResponse
+from src.register.schemas import MerchantCreate, MerchantResponse, MerchantUpdate
 
 router = APIRouter()
 

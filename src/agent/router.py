@@ -2,14 +2,14 @@
 
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.common.database import get_db
 from src.agent.db_models import SnapshotDB
-from src.agent.schemas import MonitorRequest, MonitorResult, SnapshotResponse
 from src.agent.monitor import monitor_merchant
+from src.agent.schemas import MonitorRequest, MonitorResult, SnapshotResponse
+from src.common.database import get_db
 
 router = APIRouter()
 

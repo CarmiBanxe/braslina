@@ -1,13 +1,14 @@
 """Create all tables on startup."""
 import asyncio
-from src.common.database import engine
-from src.common.base import Base
 
 # Import all models so Base.metadata knows about them
-import src.agent.db_models  # noqa
-import src.checklist.db_models  # noqa
+import src.agent.db_models
+import src.checklist.db_models
+import src.purchases.db_models
 import src.register.db_models  # noqa
-import src.purchases.db_models  # noqa
+from src.common.base import Base
+from src.common.database import engine
+
 
 async def init():
     async with engine.begin() as conn:

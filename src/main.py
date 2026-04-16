@@ -1,16 +1,18 @@
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
+
+import src.agent.db_models
+import src.checklist.db_models
+import src.purchases.db_models
+import src.register.db_models  # noqa
 from src.agent.router import router as agent_router
 from src.checklist.router import router as checklist_router
-from src.register.router import router as register_router
-from src.purchases.router import router as purchases_router
-from src.common.database import engine
 from src.common.base import Base
+from src.common.database import engine
+from src.purchases.router import router as purchases_router
+from src.register.router import router as register_router
 
-import src.agent.db_models  # noqa
-import src.checklist.db_models  # noqa
-import src.register.db_models  # noqa
-import src.purchases.db_models  # noqa
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
