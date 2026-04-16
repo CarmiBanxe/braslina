@@ -1,61 +1,61 @@
-# Braslina Domain Model
+# Domain Model — ERD
 
-## Core aggregates
+> Text-based ERD for braslina database schema.
 
-### MerchantRegisterEntry
-Represents the merchant onboarding register row and lifecycle state.
+merchants
 
-Key fields:
-- merchant_id
-- legal_name
-- website
-- desired_mcc
-- status
-- date_started_work
-- next_review_date
-- expected_turnover_eur
+id PK str "mer_XXXXXXXX"
+name str
+website str
+mcc str
+status str default="new"
+created_at datetime
+updated_at datetime
 
-### ChecklistResult
-Represents the onboarding checklist attached to a merchant case.
+checklists
 
-Key fields:
-- items[]
-- failed_items()
-- review_items()
-- is_blocked()
+id PK str "mcl_XXXXXXXX"
+merchant_id FK -> merchants.id
+template_id str
+created_at datetime
+completed_at datetime (nullable)
 
-### ChecklistItem
-Represents one individual control item.
+check_items
 
-Key fields:
-- code
-- label
-- status
-- notes
+id PK str "chi_XXXXXXXX"
+checklist_id FK -> checklists.id
+name str
+description text
+auto_verifiable bool
+status str default="pending"
+verified_at datetime (nullable)
+evidence_url str (nullable)
+notes text (nullable)
 
-### ScreenshotJob
-Represents a website monitoring capture request.
+snapshots
 
-Key fields:
-- merchant_id
-- url
+id PK str "snp_XXXXXXXX"
+merchant_id FK -> merchants.id
+url str
+screenshot_path str
+diff_pct float (nullable)
+has_changes bool
+created_at datetime
 
-### Purchase log entry
-Represents test purchase / refund evidence linked to a merchant.
+test_purchases
 
-Expected fields:
-- merchant_id
-- purchase_date
-- amount
-- receipt_path
-- refund_status
-- notes
+id PK str "tpr_XXXXXXXX"
+merchant_id FK -> merchants.id
+amount float
+currency str
+result str
+performed_by str
+performed_at datetime
+notes text (nullable)
 
-## Supporting bounded contexts
+## Relationships
 
-- Case Management
-- Checklist & Rules
-- Website Evidence
-- Test Purchase Operations
-- CRM / Workflow Integration
-- Monitoring & Alerts
+- merchants 1 --< checklists (one merchant, many checklists)
+- checklists 1 --< check_items (one checklist, many items)
+- merchants 1 --< snapshots (one merchant, many snapshots)
+- merchants 1 --< test_purchases (one merchant, many purchases)
