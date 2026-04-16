@@ -1,0 +1,55 @@
+# Sales Checklist Template v1
+# Each item: code, label, category, auto_verifiable
+template_id: tpl_sales_v1
+name: Sales Onboarding Checklist
+version: 1
+items:
+  - code: kyc_docs
+    label: KYC documents collected
+    category: compliance
+    auto_verifiable: false
+
+  - code: aml_check
+    label: AML screening passed
+    category: compliance
+    auto_verifiable: false
+
+  - code: terms_accepted
+    label: Terms and Conditions accepted
+    category: legal
+    auto_verifiable: false
+
+  - code: payment_logos
+    label: Payment brand logos displayed correctly
+    category: website
+    auto_verifiable: true
+
+  - code: threeds_present
+    label: 3D Secure enabled
+    category: technical
+    auto_verifiable: true
+
+  - code: prohibited_content
+    label: No prohibited content on website
+    category: website
+    auto_verifiable: true
+
+  - code: pricing_visible
+    label: Pricing and refund policy visible
+    category: website
+    auto_verifiable: true
+
+  - code: contact_info
+    label: Contact information present
+    category: website
+    auto_verifiable: true
+
+  - code: privacy_policy
+    label: Privacy policy page exists
+    category: legal
+    auto_verifiable: true
+
+  - code: test_purchase_ok
+    label: Test purchase completed successfully
+    category: testing
+    auto_verifiable: false

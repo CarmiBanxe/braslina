@@ -1,63 +1,70 @@
 """FastAPI router for merchant checklists."""
 
-from datetime import UTC, datetime
-
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
-from src.checklist.db_models import CheckItemDB, ChecklistDB
-from src.checklist.engine import SALES_CHECKLIST
-from src.checklist.schemas import CheckItemResponse, CheckItemUpdate, ChecklistCreate, ChecklistResponse
+from src.checklist.schemas import (
+    CheckItemResponse,
+    CheckItemUpdate,
+    ChecklistCreate,
+    ChecklistResponse,
+    EvaluationResponse,
+)
+from src.checklist.service import ChecklistService
 from src.common.database import get_db
+from src.common.exceptions import InvalidStateTransition, NotFoundError
 
 router = APIRouter()
 
 
+def _svc(db: AsyncSession = Depends(get_db)) -> ChecklistService:
+    return ChecklistService(db)
+
+
 @router.post("/", response_model=ChecklistResponse, status_code=201)
-async def create_checklist(data: ChecklistCreate, db: AsyncSession = Depends(get_db)):
-    template = SALES_CHECKLIST  # TODO: lookup by template_id
-    checklist = ChecklistDB(merchant_id=data.merchant_id, template_id=data.template_id)
-    for item in template.items:
-        checklist.items.append(CheckItemDB(
-            name=item.label, description=item.code,
-            auto_verifiable=False,
-        ))
-    db.add(checklist)
-    await db.commit()
-    await db.refresh(checklist, ["items"])
-    return checklist
+async def create_checklist(data: ChecklistCreate, svc: ChecklistService = Depends(_svc)):
+    return await svc.create_from_template(data.merchant_id, data.template_id)
 
 
 @router.get("/{checklist_id}", response_model=ChecklistResponse)
-async def get_checklist(checklist_id: str, db: AsyncSession = Depends(get_db)):
-    q = select(ChecklistDB).where(ChecklistDB.id == checklist_id).options(selectinload(ChecklistDB.items))
-    result = await db.execute(q)
-    checklist = result.scalar_one_or_none()
-    if not checklist:
-        raise HTTPException(404, "Checklist not found")
-    return checklist
+async def get_checklist(checklist_id: str, svc: ChecklistService = Depends(_svc)):
+    try:
+        return await svc.get_checklist(checklist_id)
+    except NotFoundError as e:
+        raise HTTPException(404, e.message) from None
 
 
 @router.get("/merchant/{merchant_id}", response_model=list[ChecklistResponse])
-async def list_checklists_by_merchant(merchant_id: str, db: AsyncSession = Depends(get_db)):
-    q = select(ChecklistDB).where(ChecklistDB.merchant_id == merchant_id).options(selectinload(ChecklistDB.items))
-    result = await db.execute(q)
-    return result.scalars().all()
+async def list_checklists_by_merchant(merchant_id: str, svc: ChecklistService = Depends(_svc)):
+    return await svc.list_by_merchant(merchant_id)
 
 
 @router.patch("/items/{item_id}", response_model=CheckItemResponse)
-async def update_check_item(item_id: str, data: CheckItemUpdate, db: AsyncSession = Depends(get_db)):
-    item = await db.get(CheckItemDB, item_id)
-    if not item:
-        raise HTTPException(404, "Check item not found")
-    item.status = data.status
-    item.verified_at = datetime.now(UTC)
-    if data.evidence_url is not None:
-        item.evidence_url = data.evidence_url
-    if data.notes is not None:
-        item.notes = data.notes
-    await db.commit()
-    await db.refresh(item)
-    return item
+async def update_check_item(item_id: str, data: CheckItemUpdate, svc: ChecklistService = Depends(_svc)):
+    try:
+        return await svc.update_item_status(
+            item_id, data.status.value, data.evidence_url, data.notes
+        )
+    except NotFoundError as e:
+        raise HTTPException(404, e.message) from None
+    except InvalidStateTransition as e:
+        raise HTTPException(422, e.message) from None
+
+
+@router.post("/evaluate/{checklist_id}", response_model=EvaluationResponse)
+async def evaluate_checklist(checklist_id: str, svc: ChecklistService = Depends(_svc)):
+    try:
+        result = await svc.evaluate_checklist(checklist_id)
+        return EvaluationResponse(
+            total=result.total,
+            passed=result.passed,
+            failed=result.failed,
+            needs_review=result.needs_review,
+            pending=result.pending,
+            not_applicable=result.not_applicable,
+            is_complete=result.is_complete,
+            is_blocked=result.is_blocked,
+            completion_pct=result.completion_pct,
+        )
+    except NotFoundError as e:
+        raise HTTPException(404, e.message) from None

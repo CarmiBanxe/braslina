@@ -1,54 +1,113 @@
-"""Merchant checklist engine."""
+"""Checklist engine — template loading and evaluation logic."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
+from pathlib import Path
+
+import yaml
 
 
 class CheckStatus(StrEnum):
-    PASS = "pass"
-    FAIL = "fail"
+    PENDING = "pending"
+    IN_PROGRESS = "in_progress"
+    PASSED = "passed"
+    FAILED = "failed"
     NEEDS_REVIEW = "needs_review"
     NOT_APPLICABLE = "not_applicable"
 
 
-@dataclass(slots=True)
+# Valid transitions: from_status -> set of allowed to_statuses
+VALID_TRANSITIONS: dict[CheckStatus, set[CheckStatus]] = {
+    CheckStatus.PENDING: {CheckStatus.IN_PROGRESS, CheckStatus.NOT_APPLICABLE},
+    CheckStatus.IN_PROGRESS: {CheckStatus.PASSED, CheckStatus.FAILED, CheckStatus.NEEDS_REVIEW},
+    CheckStatus.NEEDS_REVIEW: {CheckStatus.PASSED, CheckStatus.FAILED, CheckStatus.IN_PROGRESS},
+    CheckStatus.FAILED: {CheckStatus.IN_PROGRESS},
+    CheckStatus.PASSED: set(),
+    CheckStatus.NOT_APPLICABLE: set(),
+}
+
+TEMPLATES_DIR = Path(__file__).parent / "templates"
+
+
+@dataclass
 class ChecklistItem:
     code: str
     label: str
-    status: CheckStatus
-    notes: str = ""
+    category: str = ""
+    auto_verifiable: bool = False
 
 
-@dataclass(slots=True)
-class ChecklistResult:
-    items: list[ChecklistItem]
-
-    def failed_items(self) -> list[ChecklistItem]:
-        return [item for item in self.items if item.status == CheckStatus.FAIL]
-
-    def review_items(self) -> list[ChecklistItem]:
-        return [item for item in self.items if item.status == CheckStatus.NEEDS_REVIEW]
-
-    def is_blocked(self) -> bool:
-        return bool(self.failed_items())
+@dataclass
+class ChecklistTemplate:
+    template_id: str
+    name: str
+    version: int
+    items: list[ChecklistItem] = field(default_factory=list)
 
 
-def default_merchant_checklist() -> ChecklistResult:
-    return ChecklistResult(
-        items=[
-            ChecklistItem("mcc-match", "MCC matches business model", CheckStatus.NEEDS_REVIEW),
-            ChecklistItem("website-content", "Website content is sufficiently detailed", CheckStatus.NEEDS_REVIEW),
-            ChecklistItem("terms-policy", "Terms and policies are present", CheckStatus.NEEDS_REVIEW),
-            ChecklistItem("merchant-info", "Merchant identity and support info are present", CheckStatus.NEEDS_REVIEW),
-            ChecklistItem("payment-logos", "Card scheme logos are valid", CheckStatus.NEEDS_REVIEW),
-            ChecklistItem("checkout-3ds", "Checkout and 3DS behavior verified", CheckStatus.NEEDS_REVIEW),
-            ChecklistItem("test-purchase", "Test purchase evidence collected", CheckStatus.NEEDS_REVIEW),
-            ChecklistItem("refund-check", "Refund flow verified", CheckStatus.NEEDS_REVIEW),
-        ]
+@dataclass
+class EvaluationResult:
+    total: int = 0
+    passed: int = 0
+    failed: int = 0
+    needs_review: int = 0
+    pending: int = 0
+    not_applicable: int = 0
+    is_complete: bool = False
+    is_blocked: bool = False
+    completion_pct: float = 0.0
+
+
+def load_template(template_id: str) -> ChecklistTemplate:
+    """Load a checklist template from YAML file."""
+    path = TEMPLATES_DIR / f"{template_id}.yaml"
+    if not path.exists():
+        raise FileNotFoundError(f"Template {template_id} not found at {path}")
+    with open(path) as f:
+        data = yaml.safe_load(f)
+    items = [ChecklistItem(**item) for item in data.get("items", [])]
+    return ChecklistTemplate(
+        template_id=data["template_id"],
+        name=data["name"],
+        version=data["version"],
+        items=items,
     )
 
 
-# Alias for router compatibility
-SALES_CHECKLIST = default_merchant_checklist()
+def evaluate(statuses: list[str]) -> EvaluationResult:
+    """Evaluate a list of item statuses and return aggregated result."""
+    result = EvaluationResult(total=len(statuses))
+    for s in statuses:
+        status = CheckStatus(s)
+        if status == CheckStatus.PASSED:
+            result.passed += 1
+        elif status == CheckStatus.FAILED:
+            result.failed += 1
+        elif status == CheckStatus.NEEDS_REVIEW:
+            result.needs_review += 1
+        elif status == CheckStatus.PENDING:
+            result.pending += 1
+        elif status == CheckStatus.NOT_APPLICABLE:
+            result.not_applicable += 1
+
+    applicable = result.total - result.not_applicable
+    result.is_blocked = result.failed > 0
+    result.is_complete = applicable > 0 and (result.passed + result.not_applicable) == result.total
+    result.completion_pct = round((result.passed / applicable) * 100, 1) if applicable > 0 else 0.0
+    return result
+
+
+def is_valid_transition(current: str, target: str) -> bool:
+    """Check if a status transition is allowed."""
+    try:
+        c = CheckStatus(current)
+        t = CheckStatus(target)
+    except ValueError:
+        return False
+    return t in VALID_TRANSITIONS.get(c, set())
+
+
+# Backward compat alias used by router
+SALES_CHECKLIST = load_template("tpl_sales_v1")
