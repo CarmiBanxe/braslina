@@ -11,22 +11,22 @@ class MonitorRequest(BaseModel):
     alert_threshold_pct: float = 5.0
 
 
+class MonitorResult(BaseModel):
+    merchant_id: str
+    action: str
+    diff_pct: float
+    alert: bool
+    screenshot_url: str | None = None
+    diff_url: str | None = None
+
+
 class SnapshotResponse(BaseModel):
     id: str
     merchant_id: str
     screenshot_url: str
     diff_url: str | None
-    diff_pct: float | None
+    diff_pct: float
     alert_triggered: bool
     created_at: datetime
 
     model_config = {"from_attributes": True}
-
-
-class MonitorResult(BaseModel):
-    merchant_id: str
-    action: str | None = None
-    diff_pct: float | None = None
-    alert: bool = False
-    screenshot_url: str | None = None
-    diff_url: str | None = None
