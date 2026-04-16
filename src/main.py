@@ -1,11 +1,11 @@
 """FastAPI application entry point."""
-
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
 from src.agent.router import router as agent_router
 from src.checklist.router import router as checklist_router
+from src.crm.router import router as crm_router
 from src.purchases.router import router as purchases_router
 from src.register.router import router as register_router
 
@@ -27,6 +27,7 @@ app.include_router(agent_router, prefix="/api/v1/monitor", tags=["Website Monito
 app.include_router(checklist_router, prefix="/api/v1/checklist", tags=["Checklist"])
 app.include_router(register_router, prefix="/api/v1/onboarding", tags=["Onboarding"])
 app.include_router(purchases_router, prefix="/api/v1/test-purchase", tags=["Test Purchase"])
+app.include_router(crm_router, prefix="/api/v1/crm", tags=["CRM"])
 
 
 @app.get("/health")
