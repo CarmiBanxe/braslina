@@ -1,12 +1,12 @@
 """Pydantic schemas for test purchases API."""
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Literal
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
 
 
-class PurchaseResult(str, Enum):
+class PurchaseResult(StrEnum):
     passed = "passed"
     failed = "failed"
     partial = "partial"
