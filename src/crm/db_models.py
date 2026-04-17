@@ -6,6 +6,7 @@ from enum import StrEnum
 from sqlalchemy import DateTime, ForeignKey, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
+
 from src.common.base import Base
 
 
