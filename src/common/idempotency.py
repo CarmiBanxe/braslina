@@ -2,10 +2,9 @@
 import json
 import os
 
-from fastapi import HTTPException, Request, Response
-from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-
 import redis.asyncio as aioredis
+from fastapi import Request, Response
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 IDEMPOTENCY_TTL = int(os.getenv("BRASLINA_IDEMPOTENCY_TTL", "86400"))
