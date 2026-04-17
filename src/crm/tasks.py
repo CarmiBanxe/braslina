@@ -1,6 +1,6 @@
 """Celery tasks for CRM reminders."""
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 
 from src.celery_app import app
 
@@ -27,11 +27,11 @@ def send_reminder(self, reminder_id: str, merchant_id: str, message: str, channe
             "merchant_id": merchant_id,
             "channel": channel,
             "status": "sent",
-            "sent_at": datetime.utcnow().isoformat(),
+            "sent_at": datetime.now(UTC).isoformat(),
         }
     except Exception as exc:
         logger.error("Failed to send reminder %s: %s", reminder_id, exc)
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 @app.task
