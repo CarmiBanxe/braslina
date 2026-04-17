@@ -5,6 +5,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from prometheus_fastapi_instrumentator import Instrumentator
+
 from src.agent.router import router as agent_router
 from src.checklist.router import router as checklist_router
 from src.common.health import router as health_router
