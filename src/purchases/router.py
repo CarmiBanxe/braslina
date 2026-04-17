@@ -1,6 +1,7 @@
 """FastAPI router for test purchases."""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.common.database import get_db
 from src.common.exceptions import NotFoundError, ValidationError
 from src.purchases.schemas import PurchaseCreate, PurchaseResponse, PurchaseSummary
