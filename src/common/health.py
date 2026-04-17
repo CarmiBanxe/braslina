@@ -10,6 +10,7 @@ async def _check_db() -> str:
     """Check database connectivity."""
     try:
         from sqlalchemy import text
+
         from src.common.database import async_session
         async with async_session() as session:
             await session.execute(text("SELECT 1"))
