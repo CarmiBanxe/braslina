@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     # -- App
     APP_ENV: str = "development"
     LOG_LEVEL: str = "INFO"
-    API_KEY: str = ""
+    BRASLINA_API_KEY: str = ""
 
 
 settings = Settings()

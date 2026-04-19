@@ -54,3 +54,14 @@ jobs:
           REDIS_URL: redis://localhost:6379/0
         run: |
           pytest --cov=src --cov-fail-under=80 --cov-report=term-missing -v
+
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
