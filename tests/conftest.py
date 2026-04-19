@@ -5,6 +5,7 @@ from collections.abc import AsyncGenerator
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import NullPool
 
 os.environ.setdefault("BRASLINA_API_KEY", "")
 os.environ.setdefault("BRASLINA_ENV", "test")
@@ -18,7 +19,10 @@ TEST_DB_URL = os.getenv(
     "postgresql+asyncpg://braslina:braslina_dev@localhost:5432/braslina",
 )
 
-engine = create_async_engine(TEST_DB_URL, echo=False)
+# NullPool: each DB call gets a fresh connection in whatever event loop is running.
+# This prevents "Future attached to a different loop" errors when session-scoped setup_db
+# (runs in session loop) and function-scoped tests (run in per-test loops) share the engine.
+engine = create_async_engine(TEST_DB_URL, echo=False, poolclass=NullPool)
 TestSession = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
