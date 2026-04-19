@@ -24,7 +24,9 @@ except ImportError:
     HAS_PIXELMATCH = False
 
 
-STORAGE_BASE = Path("/app/storage/screenshots")
+import os
+
+STORAGE_BASE = Path(os.getenv("SCREENSHOT_STORAGE_BASE", "/app/storage/screenshots"))
 
 
 @dataclass

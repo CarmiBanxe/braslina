@@ -9,6 +9,7 @@ from sqlalchemy.pool import NullPool
 
 os.environ.setdefault("BRASLINA_API_KEY", "")
 os.environ.setdefault("BRASLINA_ENV", "test")
+os.environ.setdefault("SCREENSHOT_STORAGE_BASE", "/tmp/braslina_test/screenshots")
 
 from src.common.base import Base
 from src.common.database import get_db
