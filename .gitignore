@@ -12,3 +12,8 @@ build/
 *.bak
 *.swp
 .*.swp
+
+*.bak
+*.swp
+.*.swp
+.venv/
