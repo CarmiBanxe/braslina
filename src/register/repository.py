@@ -2,6 +2,7 @@
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from src.register.db_models import MerchantDB
 
@@ -17,7 +18,13 @@ class MerchantRepository:
         return merchant
 
     async def get_by_id(self, merchant_id: str) -> MerchantDB | None:
-        return await self.db.get(MerchantDB, merchant_id)
+        stmt = (
+            select(MerchantDB)
+            .options(selectinload(MerchantDB.status_log))
+            .where(MerchantDB.id == merchant_id)
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
 
     async def list_all(self, status: str | None = None) -> list[MerchantDB]:
         q = select(MerchantDB)

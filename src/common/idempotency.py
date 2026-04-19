@@ -1,11 +1,11 @@
 """Idempotency key support for POST endpoints."""
 import json
 import os
-
-from fastapi import HTTPException, Request, Response
-from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from typing import Any
 
 import redis.asyncio as aioredis
+from fastapi import Request, Response
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 IDEMPOTENCY_TTL = int(os.getenv("BRASLINA_IDEMPOTENCY_TTL", "86400"))
@@ -39,8 +39,14 @@ class IdempotencyMiddleware(BaseHTTPMiddleware):
             )
         response = await call_next(request)
         body = b""
-        async for chunk in response.body_iterator:
-            body += chunk if isinstance(chunk, bytes) else chunk.encode()
+        body_iterator = getattr(response, "body_iterator", None)
+        if body_iterator is not None:
+            async for chunk in body_iterator:
+                body += chunk if isinstance(chunk, bytes) else str(chunk).encode()
+        else:
+            raw_body: Any = getattr(response, "body", b"")
+            body = raw_body if isinstance(raw_body, bytes) else str(raw_body).encode()
+
         await r.setex(
             cache_key,
             IDEMPOTENCY_TTL,
