@@ -1,13 +1,10 @@
 """Shared test fixtures for braslina."""
-import asyncio
 import os
 from collections.abc import AsyncGenerator
 
-import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 os.environ.setdefault("BRASLINA_API_KEY", "")
 os.environ.setdefault("BRASLINA_ENV", "test")
@@ -22,14 +19,7 @@ TEST_DB_URL = os.getenv(
 )
 
 engine = create_async_engine(TEST_DB_URL, echo=False)
-TestSession = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-
-
-@pytest.fixture(scope="session")
-def event_loop():
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
+TestSession = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
 @pytest_asyncio.fixture(scope="session", autouse=True)
@@ -50,7 +40,7 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
 
 @pytest_asyncio.fixture
 async def client() -> AsyncGenerator[AsyncClient, None]:
-    async def _override_session():
+    async def _override_session() -> AsyncGenerator[AsyncSession, None]:
         async with TestSession() as session:
             yield session
 
