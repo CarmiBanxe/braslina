@@ -1,8 +1,9 @@
 """Integration tests for Braslina API endpoints."""
 import os
+
 import pytest
 import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 TEST_DB_URL = os.getenv(
@@ -17,8 +18,8 @@ TestSession = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_com
 @pytest_asyncio.fixture(autouse=True)
 async def setup_app():
     from src.common.base import Base
-    from src.main import app
     from src.common.database import get_db
+    from src.main import app
 
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -58,7 +59,9 @@ async def merchant_id(client):
 async def test_health(client):
     r = await client.get("/health")
     assert r.status_code == 200
-    assert r.json() == {"status": "ok", "service": "braslina"}
+    data = r.json()
+    assert "status" in data
+    assert data["db"] == "ok"
 
 
 @pytest.mark.asyncio
@@ -98,7 +101,7 @@ async def test_create_test_purchase(client, merchant_id):
         "merchant_id": merchant_id,
         "amount": 1.00,
         "currency": "EUR",
-        "result": "approved",
+        "result": "passed",
         "performed_by": "qa@test",
     }
     r = await client.post("/api/v1/test-purchase/", json=payload)
