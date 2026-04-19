@@ -70,7 +70,7 @@ class PurchaseService:
         rows = await self.db.execute(q)
         counts = {r: 0 for r in VALID_RESULTS}
         for row in rows:
-            counts[row.result] = row.count
+            counts[row.result] = int(row._mapping["count"])
 
         last_q = (
             select(func.max(TestPurchaseDB.performed_at))

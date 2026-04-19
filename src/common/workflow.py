@@ -7,7 +7,7 @@ from datetime import date
 from pathlib import Path
 
 from src.agent.monitor import ScreenshotJob, run_job
-from src.checklist.engine import ChecklistResult, default_merchant_checklist
+from src.checklist.engine import ChecklistResult, default_merchant_checklist, evaluate
 from src.register.models import MerchantRegisterEntry, MerchantStatus
 
 
@@ -34,7 +34,8 @@ def run_onboarding_workflow(
         date_started_work=date.today(),
     )
 
-    checklist = default_merchant_checklist()
+    checklist_template = default_merchant_checklist()
+    checklist = evaluate(["pending"] * len(checklist_template.items))
     screenshot_path = run_job(
         base_dir="storage/screenshots",
         job=ScreenshotJob(merchant_id=merchant_id, url=website),
@@ -53,7 +54,7 @@ def run_onboarding_workflow(
             if merchant.next_review_date
             else None
         ),
-        "checklist_items": len(checklist.items),
+        "checklist_items": checklist.total,
         "screenshot_path": str(screenshot_path),
     }
 

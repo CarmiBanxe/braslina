@@ -111,3 +111,11 @@ def is_valid_transition(current: str, target: str) -> bool:
 
 # Backward compat alias used by router
 SALES_CHECKLIST = load_template("tpl_sales_v1")
+
+# Backward-compatible aliases used by workflow
+ChecklistResult = EvaluationResult
+
+
+def default_merchant_checklist() -> ChecklistTemplate:
+    """Return the default merchant checklist template."""
+    return SALES_CHECKLIST

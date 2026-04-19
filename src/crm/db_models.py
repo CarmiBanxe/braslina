@@ -1,7 +1,7 @@
 """SQLAlchemy ORM models for CRM workflow and reminders."""
 import uuid
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 
 from sqlalchemy import DateTime, ForeignKey, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB
@@ -10,7 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from src.common.base import Base
 
 
-class WorkflowStage(str, Enum):
+class WorkflowStage(StrEnum):
     NEW = "new"
     SALES_REVIEW = "sales_review"
     COMPLIANCE_REVIEW = "compliance_review"

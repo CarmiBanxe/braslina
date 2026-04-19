@@ -31,7 +31,7 @@ def send_reminder(self, reminder_id: str, merchant_id: str, message: str, channe
         }
     except Exception as exc:
         logger.error("Failed to send reminder %s: %s", reminder_id, exc)
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 @app.task

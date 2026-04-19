@@ -13,7 +13,7 @@ os.environ.setdefault("BRASLINA_API_KEY", "")
 os.environ.setdefault("BRASLINA_ENV", "test")
 
 from src.main import app
-from src.common.database import Base, get_db
+from src.common.database import Base, get_session
 
 TEST_DB_URL = os.getenv(
     "DATABASE_URL",
@@ -49,11 +49,11 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
 
 @pytest_asyncio.fixture
 async def client() -> AsyncGenerator[AsyncClient, None]:
-    async def _override_db():
+    async def _override_session():
         async with TestSession() as session:
             yield session
 
-    app.dependency_overrides[get_db] = _override_db
+    app.dependency_overrides[get_session] = _override_session
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac

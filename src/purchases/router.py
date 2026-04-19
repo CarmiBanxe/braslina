@@ -22,7 +22,7 @@ async def create_purchase(data: PurchaseCreate, db: AsyncSession = Depends(get_d
     try:
         return await svc.create_purchase(**data.model_dump())
     except ValidationError as exc:
-        raise HTTPException(422, detail=exc.message)
+        raise HTTPException(422, detail=exc.message) from exc
 
 
 @router.get("/{purchase_id}", response_model=PurchaseResponse)
@@ -31,7 +31,7 @@ async def get_purchase(purchase_id: str, db: AsyncSession = Depends(get_db)):
     try:
         return await svc.get_purchase(purchase_id)
     except NotFoundError as exc:
-        raise HTTPException(404, detail=exc.message)
+        raise HTTPException(404, detail=exc.message) from exc
 
 
 @router.get("/summary/{merchant_id}", response_model=PurchaseSummary)

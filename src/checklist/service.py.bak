@@ -67,5 +67,5 @@ class ChecklistService:
         result = evaluate(statuses)
         if result.is_complete:
             checklist.completed_at = datetime.now(UTC)
-            await self.repo.commit()
+            await self.repo.update_item(checklist)  # just commit
         return result

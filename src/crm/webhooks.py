@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import httpx
 
@@ -19,7 +19,7 @@ class N8nWebhookClient:
                 f"{self.base_url}/webhook/{webhook_path}", json=payload
             )
             resp.raise_for_status()
-            return resp.json()
+            return cast(dict[str, Any], resp.json())
 
     async def merchant_created(self, merchant: dict) -> dict:
         return await self.trigger("merchant-created", merchant)

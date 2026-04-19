@@ -1,0 +1,12 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "ignore venv, caches, third-party vendor dirs"
+paths = [
+  '''\.venv/''',
+  '''\.venv/.*''',
+  '''__pycache__/''',
+  '''.*\.pyc$''',
+  '''site-packages/''',
+]

@@ -1,7 +1,8 @@
 """Redis-backed rate limiter."""
 import os
-from fastapi import HTTPException, Request
+
 import redis.asyncio as aioredis
+from fastapi import HTTPException, Request
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 RATE_LIMIT = int(os.getenv("BRASLINA_RATE_LIMIT", "100"))

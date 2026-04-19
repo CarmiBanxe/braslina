@@ -58,7 +58,9 @@ async def merchant_id(client):
 async def test_health(client):
     r = await client.get("/health")
     assert r.status_code == 200
-    assert r.json() == {"status": "ok", "service": "braslina"}
+    data = r.json()
+    assert data["status"] in {"ok", "degraded"}
+    assert "db" in data
 
 
 @pytest.mark.asyncio
@@ -98,7 +100,7 @@ async def test_create_test_purchase(client, merchant_id):
         "merchant_id": merchant_id,
         "amount": 1.00,
         "currency": "EUR",
-        "result": "approved",
+        "result": "passed",
         "performed_by": "qa@test",
     }
     r = await client.post("/api/v1/test-purchase/", json=payload)

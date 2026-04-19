@@ -42,6 +42,3 @@ class ChecklistRepository:
         await self.db.commit()
         await self.db.refresh(item)
         return item
-
-    async def commit(self) -> None:
-        await self.db.commit()
