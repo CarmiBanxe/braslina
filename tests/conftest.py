@@ -1,7 +1,7 @@
 """Shared test fixtures for braslina."""
 import asyncio
 import os
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import pytest
 import pytest_asyncio
@@ -12,8 +12,9 @@ from sqlalchemy.orm import sessionmaker
 os.environ.setdefault("BRASLINA_API_KEY", "")
 os.environ.setdefault("BRASLINA_ENV", "test")
 
+from src.common.base import Base
+from src.common.database import get_db
 from src.main import app
-from src.common.database import Base, get_session
 
 TEST_DB_URL = os.getenv(
     "DATABASE_URL",
@@ -53,7 +54,7 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
         async with TestSession() as session:
             yield session
 
-    app.dependency_overrides[get_session] = _override_session
+    app.dependency_overrides[get_db] = _override_session
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
