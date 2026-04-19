@@ -9,3 +9,6 @@ storage/receipts/*
 *.egg-info/
 dist/
 build/
+*.bak
+*.swp
+.*.swp
