@@ -5,7 +5,7 @@ import asyncio
 import src.agent.db_models
 import src.checklist.db_models
 import src.purchases.db_models
-import src.register.db_models  # noqa
+import src.register.db_models  # noqa: F401  # side-effect import: registers models in Base.metadata
 from src.common.base import Base
 from src.common.database import engine
 
