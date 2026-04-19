@@ -30,7 +30,7 @@ async def get_workflow(merchant_id: str, db: AsyncSession = Depends(get_db)):
     try:
         return await svc.get_workflow(merchant_id)
     except NotFoundError as exc:
-        raise HTTPException(404, detail=exc.message)
+        raise HTTPException(404, detail=exc.message) from exc
 
 
 @router.patch("/workflow/{merchant_id}/advance", response_model=WorkflowResponse)
@@ -41,9 +41,9 @@ async def advance_workflow(
     try:
         return await svc.advance_workflow(merchant_id, data.new_stage, data.assignee_id)
     except NotFoundError as exc:
-        raise HTTPException(404, detail=exc.message)
+        raise HTTPException(404, detail=exc.message) from exc
     except InvalidStateTransition as exc:
-        raise HTTPException(422, detail=exc.message)
+        raise HTTPException(422, detail=exc.message) from exc
 
 
 # --- Reminder endpoints ---

@@ -18,9 +18,9 @@ async def test_full_onboarding_scenario(client: AsyncClient):
 
     # 1. Create merchant
     merchant_data = {
-        "company_name": "E2E Test Corp",
-        "website_url": "https://e2e-test.example.com",
-        "contact_email": "e2e@test.com",
+        "name": "E2E Test Corp",
+        "website": "https://e2e-test.example.com",
+        "mcc": "5411",
     }
     resp = await client.post("/api/v1/onboarding/", json=merchant_data)
     assert resp.status_code in (200, 201), f"Create failed: {resp.text}"
@@ -46,6 +46,7 @@ async def test_full_onboarding_scenario(client: AsyncClient):
         "amount": 9.99,
         "currency": "EUR",
         "result": "passed",
+        "performed_by": "e2e@test.com",
         "notes": "E2E acceptance test purchase",
     }
     resp = await client.post("/api/v1/test-purchase/", json=purchase_data)

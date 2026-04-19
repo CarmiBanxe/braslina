@@ -1,34 +1,30 @@
 """Shared test fixtures for braslina."""
-import asyncio
 import os
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
-import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import NullPool
 
 os.environ.setdefault("BRASLINA_API_KEY", "")
 os.environ.setdefault("BRASLINA_ENV", "test")
+os.environ.setdefault("SCREENSHOT_STORAGE_BASE", "/tmp/braslina_test/screenshots")
 
+from src.common.base import Base
+from src.common.database import get_db
 from src.main import app
-from src.common.database import Base, get_session
 
 TEST_DB_URL = os.getenv(
     "DATABASE_URL",
     "postgresql+asyncpg://braslina:braslina_dev@localhost:5432/braslina",
 )
 
-engine = create_async_engine(TEST_DB_URL, echo=False)
-TestSession = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-
-
-@pytest.fixture(scope="session")
-def event_loop():
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
+# NullPool: each DB call gets a fresh connection in whatever event loop is running.
+# This prevents "Future attached to a different loop" errors when session-scoped setup_db
+# (runs in session loop) and function-scoped tests (run in per-test loops) share the engine.
+engine = create_async_engine(TEST_DB_URL, echo=False, poolclass=NullPool)
+TestSession = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
 @pytest_asyncio.fixture(scope="session", autouse=True)
@@ -49,11 +45,11 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
 
 @pytest_asyncio.fixture
 async def client() -> AsyncGenerator[AsyncClient, None]:
-    async def _override_session():
+    async def _override_session() -> AsyncGenerator[AsyncSession, None]:
         async with TestSession() as session:
             yield session
 
-    app.dependency_overrides[get_session] = _override_session
+    app.dependency_overrides[get_db] = _override_session
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac

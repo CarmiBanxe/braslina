@@ -8,11 +8,11 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 from src.agent.router import router as agent_router
 from src.checklist.router import router as checklist_router
+from src.common.health import router as health_router
+from src.common.logging import setup_logging
 from src.crm.router import router as crm_router
 from src.purchases.router import router as purchases_router
 from src.register.router import router as register_router
-from src.common.health import router as health_router
-from src.common.logging import setup_logging
 
 
 @asynccontextmanager

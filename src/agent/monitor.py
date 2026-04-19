@@ -24,7 +24,9 @@ except ImportError:
     HAS_PIXELMATCH = False
 
 
-STORAGE_BASE = Path("/app/storage/screenshots")
+import os
+
+STORAGE_BASE = Path(os.getenv("SCREENSHOT_STORAGE_BASE", "/app/storage/screenshots"))
 
 
 @dataclass
@@ -39,17 +41,25 @@ def _ts() -> str:
 
 
 async def _take_screenshot(url: str, dest: Path) -> Path:
-    """Take a real screenshot via Playwright, or create placeholder."""
+    """Take a real screenshot via Playwright, or create placeholder.
+
+    Falls back to a placeholder file if Playwright is unavailable or the
+    browser binaries are not installed (e.g. CI without `playwright install`).
+    """
     dest.parent.mkdir(parents=True, exist_ok=True)
     if async_playwright is not None:
-        async with async_playwright() as pw:
-            browser = await pw.chromium.launch(headless=True)
-            page = await browser.new_page(viewport={"width": 1280, "height": 960})
-            await page.goto(url, wait_until="networkidle", timeout=30000)
-            await page.screenshot(path=str(dest), full_page=True)
-            await browser.close()
-    else:
-        dest.write_text(f"placeholder screenshot for {url}\n", encoding="utf-8")
+        try:
+            async with async_playwright() as pw:
+                browser = await pw.chromium.launch(headless=True)
+                page = await browser.new_page(viewport={"width": 1280, "height": 960})
+                await page.goto(url, wait_until="networkidle", timeout=30000)
+                await page.screenshot(path=str(dest), full_page=True)
+                await browser.close()
+            return dest
+        except Exception:
+            # Browser binary not installed or launch failed — use placeholder
+            pass
+    dest.write_text(f"placeholder screenshot for {url}\n", encoding="utf-8")
     return dest
 
 
