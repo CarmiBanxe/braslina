@@ -1,0 +1,118 @@
+name: Guardian
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  guardian:
+    name: guardian-${{ matrix.family }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        family: [factory, project]
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Connect to Tailscale (MagicDNS for evo1)
+        uses: tailscale/github-action@v3
+        with:
+          authkey: ${{ secrets.TS_AUTHKEY }}
+          tags: tag:github-runner
+          version: latest
+
+      - name: Resolve guardian URL for ${{ matrix.family }}
+        id: url
+        env:
+          URL_FACTORY: ${{ secrets.TS_GUARDIAN_FACTORY_URL }}
+          URL_PROJECT: ${{ secrets.TS_GUARDIAN_PROJECT_URL }}
+        run: |
+          if [ "${{ matrix.family }}" = "factory" ]; then
+            url="$URL_FACTORY"
+          else
+            url="$URL_PROJECT"
+          fi
+          if [ -z "$url" ]; then
+            echo "::error::secret TS_GUARDIAN_${{ matrix.family }}_URL is not set"
+            exit 1
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Audit via Guardian (${{ matrix.family }})
+        id: audit
+        env:
+          GUARDIAN_URL: ${{ steps.url.outputs.url }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+          ACTOR: ${{ github.actor }}
+          RUN_ID: ${{ github.run_id }}
+          FAMILY: ${{ matrix.family }}
+        run: |
+          set -euo pipefail
+          ins_id=$(printf '%s' "$PR_BODY" | grep -oE 'INS-[0-9]{4}-[0-9]{2}-[0-9]{2}-[A-Za-z0-9.+-]+' | head -1 || true)
+          prompt=$(printf '%s\n\n%s' "$PR_TITLE" "$PR_BODY")
+          # Diff: PR head vs base (last 200 lines kept under request size)
+          diff_text=$(git diff --no-color "${{ github.event.pull_request.base.sha }}".."${{ github.event.pull_request.head.sha }}" | head -c 60000 || true)
+          files_changed=$(git diff --name-only "${{ github.event.pull_request.base.sha }}".."${{ github.event.pull_request.head.sha }}" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          payload=$(jq -n \
+            --arg request_id "guardian-${FAMILY}-${RUN_ID}" \
+            --arg subject_type "pull_request" \
+            --arg subject_id "${REPO}#${PR_NUMBER}" \
+            --arg scope "$FAMILY" \
+            --arg prompt "$prompt" \
+            --arg branch "$BRANCH" \
+            --arg ins "$ins_id" \
+            --arg diff "$diff_text" \
+            --argjson files "$files_changed" \
+            --arg actor "$ACTOR" \
+            '{request_id:$request_id, subject_type:$subject_type, subject_id:$subject_id, scope:$scope, prompt:$prompt, context:{branch:$branch, instruction_id:$ins, diff:$diff, files_changed:$files}, actor:$actor}')
+          response=$(curl -sS --max-time 30 -X POST "$GUARDIAN_URL" -H 'Content-Type: application/json' -d "$payload")
+          echo "$response" > /tmp/guardian-response.json
+          result=$(echo "$response" | jq -r '.verdict.result // "error"')
+          summary=$(echo "$response" | jq -r '.verdict.summary // "no summary"')
+          echo "result=$result" >> "$GITHUB_OUTPUT"
+          echo "summary=$summary" >> "$GITHUB_OUTPUT"
+          {
+            echo "## Guardian (${FAMILY}) — ${result}"
+            echo ""
+            echo "**Summary:** ${summary}"
+            echo ""
+            echo "**Reasons:**"
+            jq -r '.verdict.reasons[]? // empty' /tmp/guardian-response.json | sed 's/^/- /'
+            echo ""
+            echo "<sub>request_id: $(jq -r '.request_id' /tmp/guardian-response.json)</sub>"
+          } > /tmp/guardian-comment.md
+          cat /tmp/guardian-comment.md
+
+      - name: Comment on PR
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -f /tmp/guardian-comment.md ]; then
+            gh pr comment ${{ github.event.pull_request.number }} \
+              -R ${{ github.repository }} \
+              --body-file /tmp/guardian-comment.md
+          else
+            echo "no comment file"
+          fi
+
+      - name: Enforce verdict
+        if: steps.audit.outputs.result == 'fail'
+        run: |
+          echo "::error::Guardian (${{ matrix.family }}) verdict: ${{ steps.audit.outputs.summary }}"
+          exit 1
