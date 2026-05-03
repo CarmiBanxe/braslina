@@ -1,0 +1,10 @@
+name: Factory Guard
+on: [pull_request]
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: test -f .claude/settings.json || (echo "Missing .claude/settings.json"; exit 1)
+      - run: test -f .github/workflows/claude.yml || (echo "Missing claude.yml"; exit 1)
+      - run: python3 -c "import json; json.load(open('.claude/settings.json'))"

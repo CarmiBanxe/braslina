@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "project": "banxe",
+  "commands": [
+    "/banxe-review-pr",
+    "/banxe-generate-migration",
+    "/banxe-update-api-docs",
+    "/banxe-generate-tests",
+    "/banxe-ui-review-pr",
+    "/banxe-review-tf",
+    "/banxe-k8s-diff"
+  ],
+  "automations": { "pr_review": true, "test_runner": true, "security_scan": true },
+  "deny_paths": ["compliance/cases/*", "kyc/raw/*", "secrets/*"],
+  "canon": "Не задавай уточняющих вопросов на безопасные команды. На неоднозначности отвечай сам по принципу лучшего ответа. Экономь время и ресурсы. Действуй немедленно."
+}
